@@ -1,0 +1,830 @@
+{
+	  "AWSTemplateFormatVersion" : "2010-09-09",
+
+	  "Description" : "This template creates some resources to run Sophos Brasil labs, intended for trainings like Bootcamp and BTH.",
+	  "Parameters" : {
+		"KeyName" : {
+		  "Description" : "Name of an existing EC2 KeyPair",
+		  "Type" : "AWS::EC2::KeyPair::KeyName",
+		  "ConstraintDescription" : "must be the name of an existing EC2 KeyPair."
+		},
+		"UserName" : {
+		  "Description" : "Define your username from Bootcamp (without the domain @sophosbrlabs.com.br",
+		  "Default": "rafael.foster",
+		  "Type" : "String"
+		},
+		 "SourceCidrForRDP" : {
+		  "Description" : "IP Cidr from which you are likely to RDP into the instances. You can add rules later by modifying the created security groups e.g. 54.32.98.160/32",
+		  "Type" : "String",
+		  "MinLength" : "9",
+		  "MaxLength" : "18",
+		  "Default": "177.138.105.128/32",
+		  "AllowedPattern" : "^([0-9]+\\.){3}[0-9]+\\/[0-9]+$"
+		},
+
+		"XGFirewallName": {
+		  "Description": "Name tag for your XG Firewall, as well as the hostname.",
+		  "Type": "String",
+		  "Default": "XGRFOSTERAWS01",
+		  "ConstraintDescription": "Must be a valid hostname",
+		  "AllowedPattern": "^\\w([\\-\\.]?\\w)*$",
+		  "MaxLength": 255
+		},
+		"DefaultAdminPassword" : {
+			"Default": "S0phos#2020",
+			"Type": "String",
+			"NoEcho": "true"
+		},
+	    "AMI": {
+			"Description": "Autodetect uses the latest AMI based on the pricing option you select. Otherwise, specify an AMI ID.",
+			"Type": "String",
+			"Default": "autodetect",
+			"NoEcho": "true"
+	    },
+		"KaliAmiId": {
+			"Type" : "String",
+			"Default": "ami-0ec21fabe91c0c048",
+			"NoEcho": "true"
+		},
+		"AgreeUserTerms": {
+			"Type" : "String",
+			"Default": "yes",
+			"NoEcho": "true"
+		},
+		"LicenseType": {
+			"Type" : "String",
+			"Default": "BYOL",
+			"NoEcho": "true"
+		},
+		"SendLearningStats": {
+			"Type" : "String",
+			"NoEcho": "true",
+			"Default": "on"
+		}
+	  },
+
+
+	  "Mappings" : {
+		"WinSRVAWSRegion2AMI" : {
+		  "af-south-1"       : {"Windows2012r2" : "ami-06a594bb3971e4d1b"},
+		  "ap-east-1"        : {"Windows2012r2" : "ami-0007cdd6170a2175f"},
+		  "ap-northeast-1"   : {"Windows2012r2" : "ami-0ddc626ddec721c46"},
+		  "ap-northeast-2"   : {"Windows2012r2" : "ami-0529040055f54cedc"},
+		  "ap-northeast-3"   : {"Windows2012r2" : "ami-0c952cb0181ec7aea"},
+		  "ap-south-1"       : {"Windows2012r2" : "ami-015f0e5c464a8512a"},
+		  "ap-southeast-1"   : {"Windows2012r2" : "ami-0a056a958e42c5eea"},
+		  "ap-southeast-2"   : {"Windows2012r2" : "ami-0ff8c6c8a57b86baf"},
+		  "ca-central-1"     : {"Windows2012r2" : "ami-036eeef0b441e4372"},
+		  "cn-north-1"       : {"Windows2012r2" : "ami-0b917c20d0711b700"},
+		  "cn-northwest-1"   : {"Windows2012r2" : "ami-0bc015932aee44fa8"},
+		  "eu-central-1"     : {"Windows2012r2" : "ami-03df16a8a966441bb"},
+		  "eu-north-1"       : {"Windows2012r2" : "ami-0a1f0facb83b9dfa6"},
+		  "eu-south-1"       : {"Windows2012r2" : "ami-0aae7c4f3141a0f11"},
+		  "eu-west-1"        : {"Windows2012r2" : "ami-0affaaca0d400ed4c"},
+		  "eu-west-2"        : {"Windows2012r2" : "ami-090b023339b2e8c50"},
+		  "eu-west-3"        : {"Windows2012r2" : "ami-0c140e6c56a0df4f2"},
+		  "me-south-1"       : {"Windows2012r2" : "ami-0a8f97d5eedb179f4"},
+		  "sa-east-1"        : {"Windows2012r2" : "ami-077b4b1ed505fa38b"},
+		  "us-east-1"        : {"Windows2012r2" : "ami-003a480a3489b1c5c"},
+		  "us-east-2"        : {"Windows2012r2" : "ami-0920445e689437bbf"},
+		  "us-west-1"        : {"Windows2012r2" : "ami-0c739d683f3eb652e"},
+		  "us-west-2"        : {"Windows2012r2" : "ami-0555de2823859bc40"}
+		},
+		"XGRegionMap": {
+		  "af-south-1": {
+			"Hourly": "ami-0572e0c990324a416",
+			"BYOL": "ami-0cdafac2b8b48673e",
+			"ARN": "aws",
+			"InstanceType": "m5.large"
+		  },
+		  "ap-east-1": {
+			"Hourly": "ami-012e26519fd9ef872",
+			"BYOL": "ami-070263356a3bcc4c8",
+			"ARN": "aws",
+			"InstanceType": "m5.large"
+		  },
+		  "ap-northeast-1": {
+			"Hourly": "ami-029f2d441d352087c",
+			"BYOL": "ami-0ce5a6b130a911485",
+			"ARN": "aws",
+			"InstanceType": "m5.large"
+		  },
+		  "ap-northeast-2": {
+			"Hourly": "ami-088dbf5988503510a",
+			"BYOL": "ami-089941f9ae802cc21",
+			"ARN": "aws",
+			"InstanceType": "m5.large"
+		  },
+		  "ap-south-1": {
+			"Hourly": "ami-01e303b58b9af18fa",
+			"BYOL": "ami-020476dd56ef1063a",
+			"ARN": "aws",
+			"InstanceType": "m5.large"
+		  },
+		  "ap-southeast-1": {
+			"Hourly": "ami-0c2957cbaf39ee6b8",
+			"BYOL": "ami-0a27c285e46a59ac9",
+			"ARN": "aws",
+			"InstanceType": "m5.large"
+		  },
+		  "ap-southeast-2": {
+			"Hourly": "ami-075a2eebb9c970d98",
+			"BYOL": "ami-0b505767283b9eaec",
+			"ARN": "aws",
+			"InstanceType": "m5.large"
+		  },
+		  "ca-central-1": {
+			"Hourly": "ami-0d36caf9b342f4afa",
+			"BYOL": "ami-007969c9df0ce1e51",
+			"ARN": "aws",
+			"InstanceType": "m5.large"
+		  },
+		  "eu-central-1": {
+			"Hourly": "ami-061dc0fe580f70918",
+			"BYOL": "ami-088557bc22dd62661",
+			"ARN": "aws",
+			"InstanceType": "m5.large"
+		  },
+		  "eu-north-1": {
+			"Hourly": "ami-05b7d9750882bec83",
+			"BYOL": "ami-08dee613f3d54dd3c",
+			"ARN": "aws",
+			"InstanceType": "m5.large"
+		  },
+		  "eu-south-1": {
+			"Hourly": "ami-0139593aa2fe9ccc1",
+			"BYOL": "ami-051f537593035b2a9",
+			"ARN": "aws",
+			"InstanceType": "m5.large"
+		  },
+		  "eu-west-1": {
+			"Hourly": "ami-07ab12c7b7d0ead9e",
+			"BYOL": "ami-0b25bda83c36626e3",
+			"ARN": "aws",
+			"InstanceType": "m5.large"
+		  },
+		  "eu-west-2": {
+			"Hourly": "ami-02eb531dbbfc709f0",
+			"BYOL": "ami-00637cb4104ef6be5",
+			"ARN": "aws",
+			"InstanceType": "m5.large"
+		  },
+		  "eu-west-3": {
+			"Hourly": "ami-02b2344c56cee96cb",
+			"BYOL": "ami-08068b83e8002c404",
+			"ARN": "aws",
+			"InstanceType": "m5.large"
+		  },
+		  "me-south-1": {
+			"Hourly": "ami-05c67ca1711818c57",
+			"BYOL": "ami-0fc72ced13804b175",
+			"ARN": "aws",
+			"InstanceType": "m5.large"
+		  },
+		  "sa-east-1": {
+			"Hourly": "ami-0fec515b92cd3a353",
+			"BYOL": "ami-052ac115489283fa9",
+			"ARN": "aws",
+			"InstanceType": "m5.large"
+		  },
+		  "us-east-1": {
+			"Hourly": "ami-0fb9abb7a9308a8b5",
+			"BYOL": "ami-0670b1ef279a64ac7",
+			"ARN": "aws",
+			"InstanceType": "m5.large"
+		  },
+		  "us-east-2": {
+			"Hourly": "ami-0acc7eaffac39caca",
+			"BYOL": "ami-0c1ad0e1ac9fe36ac",
+			"ARN": "aws",
+			"InstanceType": "m5.large"
+		  },
+		  "us-gov-east-1": {
+			"Hourly": "ami-0ff7ddb1cc4b465d2",
+			"BYOL": "ami-060945272b5e2abb0",
+			"ARN": "aws-us-gov",
+			"InstanceType": "m5.large"
+		  },
+		  "us-gov-west-1": {
+			"Hourly": "ami-0e8b0bb0c0a9e66e3",
+			"BYOL": "ami-004bfa11996f5835f",
+			"ARN": "aws-us-gov",
+			"InstanceType": "m5.large"
+		  },
+		  "us-west-1": {
+			"Hourly": "ami-0028214389e81fc39",
+			"BYOL": "ami-0434af33056d1e189",
+			"ARN": "aws",
+			"InstanceType": "m5.large"
+		  },
+		  "us-west-2": {
+			"Hourly": "ami-0144c9c3d7ecdc4e1",
+			"BYOL": "ami-0d6aecf5a5b35b738",
+			"ARN": "aws",
+			"InstanceType": "m5.large"
+		  }
+		}
+	},
+	"Conditions": {
+		"UsingAutoDetectedAMI": {
+		  "Fn::Equals": [
+			{
+			  "Ref": "AMI"
+			},
+			"autodetect"
+		  ]
+		}
+	},
+	"Resources" : {
+		"SubnetWANBootcamp": {
+		  "Type": "AWS::EC2::Subnet",
+		  "Properties": {
+			"MapPublicIpOnLaunch": "true",
+			"CidrBlock": "10.15.0.0/24",
+			"AvailabilityZone": {
+			  "Fn::Select": [
+				0,
+				{
+				  "Fn::GetAZs": ""
+				}
+			  ]
+			},
+			"VpcId": {
+			  "Ref": "BootcampVPC"
+			},
+			"Tags": [
+			  {
+				"Key": "Name",
+				"Value": "External subnet for Bootcamp (WAN)"
+			  },
+			  {
+				"Key": "env",
+				"Value": "Bootcamp-wan"
+			  }
+			]
+		  }
+		},
+		"SubnetLANBootcamp": {
+		  "Type": "AWS::EC2::Subnet",
+		  "Properties": {
+				"CidrBlock": "10.15.10.0/24",
+				"AvailabilityZone": {
+				  "Fn::Select": [
+					0,
+					{
+					  "Fn::GetAZs": ""
+					}
+				  ]
+				},
+				"VpcId": {
+				  "Ref": "BootcampVPC"
+				},
+				"Tags": [
+				  {
+					"Key": "Name",
+					"Value": "Internal subnet for Bootcamp (LAN)"
+				  },
+				  {
+					"Key": "env",
+					"Value": "Bootcamp-lan"
+				  }
+				]
+			}
+		},
+		"InternetGateway": {
+		  "Properties": {
+			"Tags": [
+			  {
+				"Key": "Name",
+				"Value": "InternetGateway"
+			  }
+			]
+		  },
+		  "Type": "AWS::EC2::InternetGateway"
+		},
+		
+		"BootcampVPC": {
+			"Type": "AWS::EC2::VPC",
+			"Properties": {
+				"CidrBlock": "10.15.0.0/16",
+				"EnableDnsHostnames": true,
+				"EnableDnsSupport": true,
+				"Tags": [{
+						"Key": "Name",
+						"Value": "SophosBrasil-BootcampVPC"
+					},
+					{
+						"Key": "env",
+						"Value": "bootcamp"
+					}
+				]
+			}
+		},
+		"RouteTable1": {
+		  "Type": "AWS::EC2::RouteTable",
+		  "Properties": {
+			"VpcId": {
+			  "Ref": "BootcampVPC"
+			}
+		  }
+		},
+		"DefaultRoute": {
+		  "Type": "AWS::EC2::Route",
+		  "Properties": {
+			"DestinationCidrBlock": "0.0.0.0/0",
+			"RouteTableId": {
+			  "Ref": "RouteTable1"
+			},
+			"GatewayId": {
+			  "Ref": "InternetGateway"
+			}
+		  },
+		  "DependsOn": "InternetGateway"
+		},
+		"subnetroute1": {
+		  "Type": "AWS::EC2::SubnetRouteTableAssociation",
+		  "Properties": {
+			"RouteTableId": {
+			  "Ref": "RouteTable1"
+			},
+			"SubnetId": {
+			  "Ref": "SubnetWANBootcamp"
+			}
+		  }
+		},
+		"RouteTable2": {
+		  "Type": "AWS::EC2::RouteTable",
+		  "Properties": {
+			"VpcId": {
+			  "Ref": "BootcampVPC"
+			}
+		  }
+		},
+		"DefaultRoute2": {
+		  "Type": "AWS::EC2::Route",
+		  "Properties": {
+			"DestinationCidrBlock": "0.0.0.0/0",
+			"RouteTableId": {
+			  "Ref": "RouteTable2"
+			},
+			"GatewayId": {
+			  "Ref": "InternetGateway"
+			}
+		  },
+		  "DependsOn": "InternetGateway"
+		},
+		"subnetroute2": {
+		  "Type": "AWS::EC2::SubnetRouteTableAssociation",
+		  "Properties": {
+			"RouteTableId": {
+			  "Ref": "RouteTable1"
+			},
+			"SubnetId": {
+			  "Ref": "SubnetLANBootcamp"
+			}
+		  }
+		},
+		"InternetGatewayAttachment": {
+		  "Properties": {
+			"InternetGatewayId": {
+			  "Ref": "InternetGateway"
+			},
+			"VpcId": {
+			  "Ref": "BootcampVPC"
+			}
+		  },
+		  "Type": "AWS::EC2::VPCGatewayAttachment"
+		},
+		"BootcampWinSecurityGroup" : {
+		  "Type" : "AWS::EC2::SecurityGroup",
+		  "Properties" : {
+			  "GroupDescription": "Bootcamp Brasil-SG for Windows to allow RDP connections", 
+			  "Tags": [
+				{
+					"Key": "Name",
+					"Value": "BootcampBrasil-SG-Win-RDP"
+				  }
+			  ],
+			"VpcId": {
+ 				"Ref": "BootcampVPC"
+ 			},
+			"SecurityGroupIngress" : [
+			  {"IpProtocol" : "tcp", "FromPort" : "3389", "ToPort" : "3389", "CidrIp" :{ "Ref" : "SourceCidrForRDP" } },
+			  {"IpProtocol" : "-1", "CidrIp" : "10.15.10.0/24" }
+			]
+		  }
+		},
+		"BootcampLNXSecurityGroup" : {
+		  "Type" : "AWS::EC2::SecurityGroup",
+		  "Properties" : {
+			"Tags": [
+			{
+				"Key": "Name",
+				"Value": "BootcampBrasil-SG-LNX-SSH"
+			  }
+			],
+			"VpcId": {
+				"Ref": "BootcampVPC"
+			},
+			"GroupDescription" : "Bootcamp Brasil - Allow SSH",
+			"SecurityGroupIngress" : [
+			  {"IpProtocol" : "tcp", "FromPort" : "22", "ToPort" : "22", "CidrIp" :{ "Ref" : "SourceCidrForRDP" } },
+			  {"IpProtocol" : "-1", "CidrIp" : "10.15.10.0/24" }
+			]
+		  }
+		},
+		"BootcampXGSecurityGroupWAN": {
+		  "Type": "AWS::EC2::SecurityGroup",
+		  "Properties": {
+			"GroupDescription": "Allow access to 22 and 4444.",
+			"SecurityGroupIngress": [
+			  {
+				"IpProtocol": "tcp",
+				"FromPort": "0",
+				"ToPort": "22",
+				"CidrIp": { "Ref" : "SourceCidrForRDP" }
+			  },
+			  {
+				"IpProtocol": "tcp",
+				"FromPort": "0",
+				"ToPort": "4444",
+				"CidrIp": { "Ref" : "SourceCidrForRDP" }
+			  }
+			],
+			"SecurityGroupEgress": [
+			  {
+				"IpProtocol": "-1",
+				"FromPort": -1,
+				"ToPort": -1,
+				"CidrIp": "0.0.0.0/0"
+			  }
+			],
+			"VpcId": {
+				  "Ref": "BootcampVPC"
+			}
+		  }
+		},
+		"BootcampXGSecurityGroupLAN": {
+		  "Type": "AWS::EC2::SecurityGroup",
+		  "Properties": {
+			"GroupDescription": "Security Group for private subnet. Allow everything by default",
+			"VpcId": {
+			  "Ref": "BootcampVPC"
+			},
+			"SecurityGroupIngress": [
+			  {
+				"IpProtocol": "-1",
+				"FromPort": -1,
+				"ToPort": -1,
+				"CidrIp": "0.0.0.0/0"
+			  }
+			],
+			"SecurityGroupEgress": [
+			  {
+				"IpProtocol": "-1",
+				"FromPort": -1,
+				"ToPort": -1,
+				"CidrIp": "0.0.0.0/0"
+			  }
+			]
+		  }
+		},
+		"XGInterfacePublic": {
+		  "Type": "AWS::EC2::NetworkInterface",
+		  "Properties": {
+			"SubnetId": {
+			  "Ref": "SubnetWANBootcamp"
+			},
+			"PrivateIpAddresses": [
+			  {
+				"PrivateIpAddress": "10.15.0.10",
+				"Primary": "true"
+			  }
+			],
+			"SourceDestCheck": "false",
+			"Description": "ENI for Public Subnet",
+			"GroupSet": [
+			  {
+				"Ref": "BootcampXGSecurityGroupWAN"
+			  }
+			]
+		  }
+		},
+		"XGInterfacePriv": {
+		  "Type": "AWS::EC2::NetworkInterface",
+		  "Properties": {
+			"SubnetId": {
+			  "Ref": "SubnetLANBootcamp"
+			},
+			"PrivateIpAddresses": [
+			  {
+				"PrivateIpAddress": "10.15.10.10",
+				"Primary": "true"
+			  }
+			],
+			"SourceDestCheck": "false",
+			"Description": "ENI for Private Subnet",
+			"GroupSet": [
+			  {
+				"Ref": "BootcampXGSecurityGroupLAN"
+			  }
+			]
+		  }
+		},
+		"NewEIP": {
+		  "Type": "AWS::EC2::EIP",
+		  "Properties": {
+			"Domain": "vpc"
+		  }
+		},
+		"AssociateEIP": {
+		  "Type": "AWS::EC2::EIPAssociation",
+		  "Properties": {
+			"AllocationId": {
+			  "Fn::GetAtt": [
+				"NewEIP",
+				"AllocationId"
+			  ]
+			},
+			"NetworkInterfaceId": {
+			  "Ref": "XGInterfacePublic"
+			}
+		  }
+		},
+		
+		"XGLaunchTemplate": {
+		  "Type": "AWS::EC2::LaunchTemplate",
+		  "Properties": {
+			"LaunchTemplateName": {
+			  "Fn::Join": [
+				"-",
+				[
+				  {
+					"Ref": "AWS::StackName"
+				  },
+				  "XGLT"
+				]
+			  ]
+			},
+			"LaunchTemplateData": {
+			  "KeyName": {
+				"Ref": "KeyName"
+			  },
+			  "NetworkInterfaces": [
+				{
+				  "NetworkInterfaceId": {
+					"Ref": "XGInterfacePriv"
+				  },
+				  "DeviceIndex": "0"
+				},
+				{
+				  "NetworkInterfaceId": {
+					"Ref": "XGInterfacePublic"
+				  },
+				  "DeviceIndex": "1"
+				}
+			  ],
+			  "ImageId": {
+				"Fn::If": [
+				  "UsingAutoDetectedAMI",
+				  {
+					"Fn::FindInMap": [
+					  "XGRegionMap",
+					  {
+						"Ref": "AWS::Region"
+					  },
+					  {
+						"Ref": "LicenseType"
+					  }
+					]
+				  },
+				  {
+					"Ref": "AMI"
+				  }
+				]
+			  },
+			  "UserData": {
+				"Fn::Base64": {
+				  "Fn::Join": [
+					"",
+					[
+					  "{",
+					  "\"hostname\":\"",
+					  {
+						"Ref": "XGFirewallName"
+					  },
+					  "\",",
+					  "\"sendstats\":\"",
+					  {
+						"Ref": "SendLearningStats"
+					  },
+					  "\",",
+					  "\"region\":\"",
+					  {
+						"Ref": "AWS::Region"
+					  },
+					  "\",",
+					  "\"secretId\":\"",
+					  {
+						"Ref": "PasswordSecret"
+					  },
+					  "\"",
+					  "}\n"
+					]
+				  ]
+				}
+			  }
+			}
+		  }
+		},
+		"XGInstance": {
+		  "Type": "AWS::EC2::Instance",
+		  "Properties": {
+		    "InstanceType": "t2.medium",
+			"LaunchTemplate": {
+			  "LaunchTemplateId": {
+				"Ref": "XGLaunchTemplate"
+			  },
+			  "Version": {
+				"Fn::GetAtt": [
+				  "XGLaunchTemplate",
+				  "LatestVersionNumber"
+				]
+			  }
+			},
+			"AvailabilityZone": {
+				  "Fn::Select": [
+					0,
+					{
+					  "Fn::GetAZs": ""
+					}
+				  ]
+			},
+			"Tags": [
+			  {
+				"Key": "Name",
+				"Value": {
+				  "Ref": "XGFirewallName"
+				}
+			  }
+			]
+		  }
+		},
+		"Kali": {
+		  "Type": "AWS::EC2::Instance",
+		  "Properties": {
+			"DisableApiTermination": "false",
+			"InstanceInitiatedShutdownBehavior": "stop",
+			"Monitoring": "false",
+			"ImageId": {
+			  "Ref": "KaliAmiId"
+			},
+			"InstanceType": "t2.micro",
+			"KeyName": {
+				  "Ref": "KeyName"
+			},
+			"Tags": [
+			  {
+				"Key": "Name",
+				"Value": "BTH-KaliLinux"
+			  }
+			],
+			"NetworkInterfaces": [
+			  {
+				"Description": "Primary network interface",
+				"DeviceIndex": 0,
+				"AssociatePublicIpAddress": "True",
+				"DeleteOnTermination": "True",
+				"SubnetId": {
+				  "Ref": "SubnetLANBootcamp"
+				},
+				"PrivateIpAddresses": [
+				  {
+					"PrivateIpAddress": "10.15.10.200",
+					"Primary": "true"
+				  }
+				],
+				"GroupSet": [
+				  {
+					"Ref": "BootcampLNXSecurityGroup"
+				  }
+				]
+			  }
+			],
+			"UserData": {
+			  "Fn::Base64": {
+				"Fn::Join": [
+				  "\n",
+				  [
+					"#!/bin/bash\n",
+					"sudo useradd adminkali\n",
+					"sudo echo 'adminkali:" , { "Ref": "DefaultAdminPassword" }, "| chpasswd \n",
+					"sudo usermod -a -G sudo adminkali" 
+				  ]
+				]
+			  }
+			}
+		  }
+		},
+	"WinSrv2016": {
+		  "Type" : "AWS::EC2::Instance",
+		  "Properties": {
+		    "KeyName" : { "Ref" : "KeyName" },
+			"ImageId" : { "Fn::FindInMap" : [ "WinSRVAWSRegion2AMI", { "Ref" : "AWS::Region" }, "Windows2012r2" ]},
+			"InstanceType": "t2.medium",
+			"Tags": [
+			  {
+				"Key": "Name",
+				"Value": "Bootcamp-WinSrv2016"
+			  }
+			],
+			"NetworkInterfaces": [{
+				"AssociatePublicIpAddress": "True",
+				"DeleteOnTermination": "True",
+				"SubnetId": {
+					"Ref": "SubnetLANBootcamp"
+				},
+				"DeviceIndex": "0",
+				"GroupSet": [{
+					"Ref": "BootcampWinSecurityGroup"
+				}],
+				"PrivateIpAddresses": [
+				  {
+					"PrivateIpAddress": "10.15.10.25",
+					"Primary": "true"
+				  }
+				]
+			}],
+			  "UserData" : { "Fn::Base64" : { "Fn::Join" : ["", [
+				  "<powershell>\n",
+				    "$ErrorActionPreference='SilentlyContinue'  \n",
+					"Stop-Transcript | out-null \n",
+					"$ErrorActionPreference = 'Continue'  \n",
+					"mkdir C:\\resources  \n",
+					"Start-Transcript -path C:\\resources\\AWSCloudFormation_InitialScript.log -append  \n",
+					"tzutil /s 'E. South America Standard Time' \n",
+					" \n",
+					"[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 \n",
+					" \n",
+					"$ChromeSetupURL = 'https://dl.google.com/tag/s/appguid%3D%7B8A69D345-D564-463C-AFF1-A69D9E530F96%7D%26iid%3D%7B76C6B3A6-70B2-80CE-FDA9-C7EA88961CCE%7D%26lang%3Dpt-BR%26browser%3D4%26usagestats%3D0%26appname%3DGoogle%2520Chrome%26needsadmin%3Dprefers%26ap%3Dx64-stable-statsdef_1%26installdataindex%3Dempty/update2/installers/ChromeSetup.exe'  \n",
+					"$SophosSetupURL = 'https://api-cloudstation-us-east-2.prod.hydra.sophos.com/api/download/a27ac774ff4efe8ab0831a5cfb09973a/SophosSetup.exe'  \n",
+					"$outputChrome = 'C:\\resources\\ChromeSetup.exe' \n",
+					"$outputSophos = 'C:\\resources\\SophosSetup.exe' \n",
+					"$wc = New-Object System.Net.WebClient  \n",
+					"$wc.DownloadFile($ChromeSetupURL, $outputChrome) \n",
+					"$wc.DownloadFile($SophosSetupURL, $outputSophos) \n",
+					"c:\\resources\\ChromeSetup.exe /silent /install | Out-Null \n",
+					"New-ItemProperty -Path 'HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce' -Name SophosSetup -Value 'C:\\resources\\SophosSetup.exe --quiet' -PropertyType ExpandString \n",
+					"net user ", { "Ref": "UserName" }, " ",  { "Ref": "DefaultAdminPassword" }, " /add /y /expires:never\n",
+					"NET LOCALGROUP 'Administrators' ", { "Ref": "UserName" }, " /add \n",
+					" \n",
+					"Function Get-RandomAlphanumericString { \n",
+					" \n",
+					"      [CmdletBinding()] \n",
+					"       Param ( \n",
+					"         [int] $length = 8 \n",
+					"       ) \n",
+					" \n",
+					"       Begin{ \n",
+					"       } \n",
+					"\n",
+					"  Process{ \n",
+					"     Write-Output ( -join ((0x30..0x39) + ( 0x41..0x5A) + ( 0x61..0x7A) | Get-Random -Count $length  | % {[char]$_}) ) \n",
+					"  } \n",
+					"} \n",
+					" \n",
+					"$randString = (Get-RandomAlphanumericString -length 4 | Tee-Object -variable teeTime ) \n",
+					" \n",
+					"$NewUserName = '", { "Ref": "UserName" }, "' -replace '[.]'\n",
+					"$ComputerName = 'SRV-' + $NewUserName + '-' + $randstring \n",
+					"$ComputerName = $ComputerName.toUpper() \n",
+					"Rename-Computer -NewName $ComputerName -force -restart \n",
+					"Stop-Transcript \n",
+				  "</powershell>"
+				]]}
+			  }
+		  }
+		},
+
+		"PasswordSecret": {
+		  "Type": "AWS::SecretsManager::Secret",
+		  "Properties": {
+			"Name": {
+			  "Fn::Join": [
+				"-",
+				[
+				  "xgpass",
+				  {
+					"Ref": "AWS::StackName"
+				  }
+				]
+			  ]
+			},
+			"Description": "This secret has a hardcoded password in SecretString (use GenerateSecretString instead)",
+			"SecretString": {
+			  "Ref": "DefaultAdminPassword"
+			}
+		  }
+		}
+	}
+}
