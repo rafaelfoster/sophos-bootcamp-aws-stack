@@ -818,9 +818,7 @@
 			"Tags": [
 			  {
 				"Key": "Name",
-				"Value": {
-				  "Ref": "XGFirewallName"
-				}
+				"Value": "BTH-FW-XGFirewall"
 			  }
 			]
 		  }
