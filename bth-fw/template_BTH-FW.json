@@ -1,0 +1,1077 @@
+{
+	  "AWSTemplateFormatVersion" : "2010-09-09",
+
+	  "Description" : "This template creates some resources to run Sophos Brasil labs, intended for trainings like  and BTH.",
+	  "Parameters" : {
+		"KeyName" : {
+		  "Description" : "Name of an existing EC2 KeyPair",
+		  "Type" : "AWS::EC2::KeyPair::KeyName",
+		  "ConstraintDescription" : "must be the name of an existing EC2 KeyPair."
+		},
+		"UserName" : {
+		  "Description" : "Define your username from  (without the domain @sophosbrlabs.com.br",
+		  "Default": "rafael.foster",
+		  "Type" : "String"
+		},
+		 "SourceCidrForRDP" : {
+		  "Description" : "IP Cidr from which you are likely to RDP into the instances. You can add rules later by modifying the created security groups e.g. 54.32.98.160/32",
+		  "Type" : "String",
+		  "MinLength" : "9",
+		  "MaxLength" : "18",
+		  "Default": "177.45.159.93/32",
+		  "AllowedPattern" : "^([0-9]+\\.){3}[0-9]+\\/[0-9]+$"
+		},
+		"DefaultAdminPassword" : {
+			"Default": "F0ster@001",
+			"Type": "String",
+			"NoEcho": "true"
+		},
+		"XGFirewallName": {
+		  "Description": "Name tag for your XG Firewall, as well as the hostname.",
+		  "Type": "String",
+		  "Default": "XGRFOSTERAWS01",
+		  "ConstraintDescription": "Must be a valid hostname",
+		  "AllowedPattern": "^\\w([\\-\\.]?\\w)*$",
+		  "MaxLength": 255
+		},
+		"KaliAmiId": {
+			"Type" : "String",
+			"Default": "ami-0ec21fabe91c0c048",
+			"NoEcho": "true"
+		}
+	},
+	"Mappings" : {
+		"Ubuntu2004LTSAMI": {			
+			"sa-east-1": {"Ubuntu2004LTS" : "ami-0c3c87b7d583d618f" },
+			"us-east-1": {"Ubuntu2004LTS" : "ami-0885b1f6bd170450c" },
+			"us-east-2": {"Ubuntu2004LTS" : "ami-0a91cd140a1fc148a" },
+			"us-west-1": {"Ubuntu2004LTS" : "ami-00831fc7c1e3ddc60" },
+			"us-west-2": {"Ubuntu2004LTS" : "ami-07dd19a7900a1f049" }
+		},
+		"WinSRVAWSRegion2AMI" : {
+		  "af-south-1"       : {"Windows2012r2" : "ami-06a594bb3971e4d1b"},
+		  "ap-east-1"        : {"Windows2012r2" : "ami-0007cdd6170a2175f"},
+		  "ap-northeast-1"   : {"Windows2012r2" : "ami-0ddc626ddec721c46"},
+		  "ap-northeast-2"   : {"Windows2012r2" : "ami-0529040055f54cedc"},
+		  "ap-northeast-3"   : {"Windows2012r2" : "ami-0c952cb0181ec7aea"},
+		  "ap-south-1"       : {"Windows2012r2" : "ami-015f0e5c464a8512a"},
+		  "ap-southeast-1"   : {"Windows2012r2" : "ami-0a056a958e42c5eea"},
+		  "ap-southeast-2"   : {"Windows2012r2" : "ami-0ff8c6c8a57b86baf"},
+		  "ca-central-1"     : {"Windows2012r2" : "ami-036eeef0b441e4372"},
+		  "cn-north-1"       : {"Windows2012r2" : "ami-0b917c20d0711b700"},
+		  "cn-northwest-1"   : {"Windows2012r2" : "ami-0bc015932aee44fa8"},
+		  "eu-central-1"     : {"Windows2012r2" : "ami-03df16a8a966441bb"},
+		  "eu-north-1"       : {"Windows2012r2" : "ami-0a1f0facb83b9dfa6"},
+		  "eu-south-1"       : {"Windows2012r2" : "ami-0aae7c4f3141a0f11"},
+		  "eu-west-1"        : {"Windows2012r2" : "ami-0affaaca0d400ed4c"},
+		  "eu-west-2"        : {"Windows2012r2" : "ami-090b023339b2e8c50"},
+		  "eu-west-3"        : {"Windows2012r2" : "ami-0c140e6c56a0df4f2"},
+		  "me-south-1"       : {"Windows2012r2" : "ami-0a8f97d5eedb179f4"},
+		  "sa-east-1"        : {"Windows2012r2" : "ami-077b4b1ed505fa38b"},
+		  "us-east-1"        : {"Windows2012r2" : "ami-003a480a3489b1c5c"},
+		  "us-east-2"        : {"Windows2012r2" : "ami-0920445e689437bbf"},
+		  "us-west-1"        : {"Windows2012r2" : "ami-0c739d683f3eb652e"},
+		  "us-west-2"        : {"Windows2012r2" : "ami-0555de2823859bc40"}
+		},
+		"XGRegionMap": {
+		  "af-south-1": {
+			"BYOL": "ami-0cdafac2b8b48673e"
+		  },
+		  "ap-east-1": {
+			"BYOL": "ami-070263356a3bcc4c8"
+		  },
+		  "ap-northeast-1": {
+			"BYOL": "ami-0ce5a6b130a911485"
+		  },
+		  "ap-northeast-2": {
+			"BYOL": "ami-089941f9ae802cc21"
+		  },
+		  "ap-south-1": {
+			"BYOL": "ami-020476dd56ef1063a"
+		  },
+		  "ap-southeast-1": {
+			"BYOL": "ami-0a27c285e46a59ac9"
+		  },
+		  "ap-southeast-2": {
+			"BYOL": "ami-0b505767283b9eaec"
+		  },
+		  "ca-central-1": {
+			"BYOL": "ami-007969c9df0ce1e51"
+		  },
+		  "eu-central-1": {
+			"BYOL": "ami-088557bc22dd62661"
+		  },
+		  "eu-north-1": {
+			"BYOL": "ami-08dee613f3d54dd3c"
+		  },
+		  "eu-south-1": {
+			"BYOL": "ami-051f537593035b2a9"
+		  },
+		  "eu-west-1": {
+			"BYOL": "ami-0b25bda83c36626e3"
+		  },
+		  "eu-west-2": {
+			"BYOL": "ami-00637cb4104ef6be5"
+		  },
+		  "eu-west-3": {
+			"BYOL": "ami-08068b83e8002c404"
+		  },
+		  "me-south-1": {
+			"BYOL": "ami-0fc72ced13804b175"
+		  },
+		  "sa-east-1": {
+			"BYOL": "ami-052ac115489283fa9"
+		  },
+		  "us-east-1": {
+			"BYOL": "ami-0670b1ef279a64ac7"
+		  },
+		  "us-east-2": {
+			"BYOL": "ami-0c1ad0e1ac9fe36ac"
+		  },
+		  "us-gov-east-1": {
+			"BYOL": "ami-060945272b5e2abb0"
+		  },
+		  "us-gov-west-1": {
+			"BYOL": "ami-004bfa11996f5835f"
+		  },
+		  "us-west-1": {
+			"BYOL": "ami-0434af33056d1e189"
+		  },
+		  "us-west-2": {
+			"BYOL": "ami-0d6aecf5a5b35b738"
+		  }
+		}
+	},
+	"Resources" : {
+		"SubnetWAN": {
+		  "Type": "AWS::EC2::Subnet",
+		  "Properties": {
+			"MapPublicIpOnLaunch": "true",
+			"CidrBlock": "10.1.10.0/24",
+			"AvailabilityZone": {
+			  "Fn::Select": [
+				0,
+				{
+				  "Fn::GetAZs": ""
+				}
+			  ]
+			},
+			"VpcId": {
+			  "Ref": "VPC"
+			},
+			"Tags": [
+			  {
+				"Key": "Name",
+				"Value": "WAN subnet for BTH-FW"
+			  },
+			  {
+				"Key": "env",
+				"Value": "BTH-FW-wan"
+			  }
+			]
+		  }
+		},
+		"SubnetLAN": {
+		  "Type": "AWS::EC2::Subnet",
+		  "Properties": {
+				"MapPublicIpOnLaunch": "true",
+				"CidrBlock": "10.1.20.0/24",
+				"AvailabilityZone": {
+				  "Fn::Select": [
+					0,
+					{
+					  "Fn::GetAZs": ""
+					}
+				  ]
+				},
+				"VpcId": {
+				  "Ref": "VPC"
+				},
+				"Tags": [
+				  {
+					"Key": "Name",
+					"Value": "Internal LAN subnet for BTH-FW"
+				  },
+				  {
+					"Key": "env",
+					"Value": "BTH-FW-lan"
+				  }
+				]
+			}
+		},
+		"VPC": {
+			"Type": "AWS::EC2::VPC",
+			"Properties": {
+				"CidrBlock": "10.1.10.0/16",
+				"EnableDnsHostnames": true,
+				"EnableDnsSupport": true,
+				"Tags": [{
+						"Key": "Name",
+						"Value": "BTH-FW-VPC"
+					},
+					{
+						"Key": "env",
+						"Value": ""
+					}
+				]
+			}
+		},
+		"RouteTablePublic": {
+		  "Type": "AWS::EC2::RouteTable",
+		  "Properties": {
+			"VpcId": {
+			  "Ref": "VPC"
+			}
+		  }
+		},
+		"RouteToIGW": {
+		  "Type": "AWS::EC2::Route",
+		  "Properties": {
+			"DestinationCidrBlock": "0.0.0.0/0",
+			"RouteTableId": {
+			  "Ref": "RouteTablePublic"
+			},
+			"GatewayId": {
+			  "Ref": "InternetGateway"
+			}
+		  },
+		  "DependsOn": "InternetGateway"
+		},
+		"SubnetRouteWAN": {
+		  "Type": "AWS::EC2::SubnetRouteTableAssociation",
+		  "Properties": {
+			"RouteTableId": {
+			  "Ref": "RouteTablePublic"
+			},
+			"SubnetId": {
+			  "Ref": "SubnetWAN"
+			}
+		  }
+		},
+		"RouteTablePrivate": {
+		  "Type": "AWS::EC2::RouteTable",
+		  "Properties": {
+			"VpcId": {
+			  "Ref": "VPC"
+			}
+		  }
+		},
+		"RouteLANToIGW": {
+		  "Type": "AWS::EC2::Route",
+		  "Properties": {
+			"DestinationCidrBlock": "0.0.0.0/0",
+			"RouteTableId": {
+			  "Ref": "RouteTablePrivate"
+			},
+			"GatewayId": {
+			  "Ref": "InternetGateway"
+			}
+		  },
+		  "DependsOn": "InternetGateway"
+		},
+		"SubnetRouteLAN": {
+		  "Type": "AWS::EC2::SubnetRouteTableAssociation",
+		  "Properties": {
+			"RouteTableId": {
+			  "Ref": "RouteTablePrivate"
+			},
+			"SubnetId": {
+			  "Ref": "SubnetLAN"
+			}
+		  }
+		},
+		"InternetGateway": {
+		  "Type": "AWS::EC2::InternetGateway",
+		  "Properties": {
+			"Tags": [
+			  {
+				"Key": "Name",
+				"Value": "InternetGateway"
+			  }
+			]
+		  }
+		},		
+		"InternetGatewayAttachment": {
+		  "Properties": {
+			"InternetGatewayId": {
+			  "Ref": "InternetGateway"
+			},
+			"VpcId": {
+			  "Ref": "VPC"
+			}
+		  },
+		  "Type": "AWS::EC2::VPCGatewayAttachment"
+		},
+		"GuacamoleSG" : {
+		  "Type" : "AWS::EC2::SecurityGroup",
+		  "Properties" : {
+			"Tags": [
+			{
+				"Key": "Name",
+				"Value": "BTH-FW-SG-GUACAMOLE"
+			  }
+			],
+			"VpcId": {
+				"Ref": "VPC"
+			},
+			"GroupDescription" : " BTH-FW-Guacamole",
+			"SecurityGroupIngress" : [
+			  {"IpProtocol" : "tcp", "FromPort" : "80", "ToPort" : "8080", "CidrIp" :{ "Ref" : "SourceCidrForRDP" } },
+			  {"IpProtocol" : "tcp", "FromPort" : "22", "ToPort" : "22", "CidrIp" :{ "Ref" : "SourceCidrForRDP" } },
+			  {"IpProtocol" : "-1", "CidrIp" : "10.1.10.0/24" },
+			  {"IpProtocol" : "-1", "CidrIp" : "10.1.20.0/24" }
+			]
+		  }
+		},
+		"GuacamoleInterfaceWAN": {
+		  "Type": "AWS::EC2::NetworkInterface",
+		  "Properties": {
+			"SubnetId": {
+			  "Ref": "SubnetWAN"
+			},
+			"PrivateIpAddresses": [
+			  {
+				"PrivateIpAddress": "10.1.10.15",
+				"Primary": "true"
+			  }
+			],
+			"SourceDestCheck": "false",
+			"Description": "ENI for Public Subnet",
+			"GroupSet": [
+			  {
+				"Ref": "GuacamoleSG"
+			  }
+			]
+		  }
+		},
+		"GuacamoleInterfaceLAN": {
+		  "Type": "AWS::EC2::NetworkInterface",
+		  "Properties": {
+			"SubnetId": {
+			  "Ref": "SubnetLAN"
+			},
+			"PrivateIpAddresses": [
+			  {
+				"PrivateIpAddress": "10.1.20.15",
+				"Primary": "true"
+			  }
+			],
+			"SourceDestCheck": "false",
+			"Description": "ENI for Private Subnet",
+			"GroupSet": [
+			  {
+				"Ref": "GuacamoleSG"
+			  }
+			]
+		  }
+		},
+		"GuacamoleNewEIP": {
+		  "Type": "AWS::EC2::EIP",
+		  "Properties": {
+			"Domain": "vpc"
+		  }
+		},
+		"GuacamoleAssociateEIP": {
+		  "Type": "AWS::EC2::EIPAssociation",
+		  "Properties": {
+			"AllocationId": {
+			  "Fn::GetAtt": [
+				"GuacamoleNewEIP",
+				"AllocationId"
+			  ]
+			},
+			"NetworkInterfaceId": {
+			  "Ref": "GuacamoleInterfaceWAN"
+			}
+		  }
+		},
+		"GuacamoleEC2": {
+		  "Type": "AWS::EC2::Instance",
+		  "Properties": {
+			"DisableApiTermination": "false",
+			"InstanceInitiatedShutdownBehavior": "stop",
+			"Monitoring": "false",
+		    "KeyName" : { "Ref" : "KeyName" },
+			"ImageId" : { "Fn::FindInMap" : [ "Ubuntu2004LTSAMI", { "Ref" : "AWS::Region" }, "Ubuntu2004LTS" ]},
+			
+			"InstanceType": "t2.micro",
+			"Tags": [
+			  {
+				"Key": "Name",
+				"Value": "BTH-FW-Guacamole"
+			  }
+			],
+			"NetworkInterfaces": [
+				{
+				  "NetworkInterfaceId": {
+					"Ref": "GuacamoleInterfaceWAN"
+				  },
+				  "DeviceIndex": "0"
+				},
+				{
+				  "NetworkInterfaceId": {
+					"Ref": "GuacamoleInterfaceLAN"
+				  },
+				  "DeviceIndex": "1"
+				}
+			],
+			"UserData": {
+			  "Fn::Base64": {
+				"Fn::Join": [
+				  "",
+				  [
+					"#!/bin/bash\n",
+					"useradd ", { "Ref": "UserName" }, " -m \n",
+					"echo '", { "Ref": "UserName" }, ":" , { "Ref": "DefaultAdminPassword" }, "' | chpasswd \n",
+					"usermod -a -G sudo ", { "Ref": "UserName" }, "\n",
+					"sed -e 's/PasswordAuthentication no/PasswordAuthentication yes/g' -i /etc/ssh/sshd_config \n",
+					"systemctl restart sshd \n",
+					"curl https://raw.githubusercontent.com/rafaelfoster/sophos-bootcamp-aws-stack/main/bth-fw/guacamole_initdb.sql > /tmp/guacamole_initdb.sql \n",
+					"sed -e \"s/{USERNAME}/", { "Ref": "UserName" }, "/g\" -i /tmp/guacamole_initdb.sql \n",
+					"sed -e \"s/{DEFAULTPASSWORD}/", { "Ref": "DefaultAdminPassword" }, "/g\" -i /tmp/guacamole_initdb.sql \n",
+					"apt update -y \n",
+					"apt install net-tools fish docker.io -y \n",
+					"systemctl enable docker \n",
+					"systemctl start docker \n",
+					"docker run --name guacd-mysql --restart unless-stopped -d -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=guacd -e MYSQL_USER=guacd -e MYSQL_PASSWORD=guacd --volume /opt/docker/guacd/mysql:/var/lib/mysql mysql:5.5 \n",
+					"docker run --name guacd -d --restart unless-stopped -p 4822:4822 guacamole/guacd \n",
+					"docker run --name guacamole --link guacd:guacd --link guacd-mysql:mysql -e GUACD_HOSTNAME=localhost -e GUACD_PORT=4822 -e MYSQL_DATABASE=guacd  -e MYSQL_USER=guacd -e MYSQL_PASSWORD=guacd --restart unless-stopped -d -p 80:8080 guacamole/guacamole \n",
+					"sleep 60 | echo Waiting Docker to complete \n",
+					"docker cp /tmp/guacamole_initdb.sql  guacd-mysql:/tmp \n",
+					"docker exec guacd-mysql bash -l -c '/usr/local/mysql/bin/mysql -uguacd -pguacd guacd < /tmp/guacamole_initdb.sql' \n"
+				  ]
+				]
+			  }
+			}
+		}
+	  },
+	    "LinuxDNSSRV": {
+		  "Type": "AWS::EC2::Instance",
+		  "Properties": {
+			"DisableApiTermination": "false",
+			"InstanceInitiatedShutdownBehavior": "stop",
+			"Monitoring": "false",
+			"KeyName" : { "Ref" : "KeyName" },
+			"ImageId" : { "Fn::FindInMap" : [ "Ubuntu2004LTSAMI", { "Ref" : "AWS::Region" }, "Ubuntu2004LTS" ]},
+			
+			"InstanceType": "t2.micro",
+			"Tags": [
+			  {
+				"Key": "Name",
+				"Value": "BTH-FW-Linux WAN DNS Server"
+			  }
+			],
+			"NetworkInterfaces": [
+			  {
+				"Description": "Linux DNS Server Public network interface",
+				"DeviceIndex": 0,
+				"AssociatePublicIpAddress": "False",
+				"DeleteOnTermination": "True",
+				"SubnetId": {
+				  "Ref": "SubnetWAN"
+				},
+				"PrivateIpAddresses": [
+				  {
+					"PrivateIpAddress": "10.1.10.11",
+					"Primary": "true"
+				  }
+				],
+				"GroupSet": [
+				  {
+					"Ref": "LinuxSrvSG"
+				  }
+				]
+			  }
+			],
+			"UserData": {
+			  "Fn::Base64": {
+				"Fn::Join": [
+				  "",
+				  [
+					"#!/bin/bash\n",
+					"useradd ", { "Ref": "UserName" }, " -m \n",
+					"echo '", { "Ref": "UserName" }, ":" , { "Ref": "DefaultAdminPassword" }, "' | chpasswd \n",
+					"usermod -a -G sudo ", { "Ref": "UserName" }, "\n",
+					"sed -e 's/PasswordAuthentication no/PasswordAuthentication yes/g' -i /etc/ssh/sshd_config \n",
+					"systemctl restart sshd \n"
+				  ]
+				]
+			  }
+			}
+		}
+	  },
+	  "LinuxInternalWEBSrv": {
+		  "Type": "AWS::EC2::Instance",
+		  "Properties": {
+			"DisableApiTermination": "false",
+			"InstanceInitiatedShutdownBehavior": "stop",
+			"Monitoring": "false",
+			"KeyName" : { "Ref" : "KeyName" },
+			"ImageId" : { "Fn::FindInMap" : [ "Ubuntu2004LTSAMI", { "Ref" : "AWS::Region" }, "Ubuntu2004LTS" ]},
+			
+			"InstanceType": "t2.micro",
+			"Tags": [
+			  {
+				"Key": "Name",
+				"Value": "BTH-FW-Linux LAN Web Server"
+			  }
+			],
+			"NetworkInterfaces": [
+			  {
+				"Description": "LAN Linux WEB Server",
+				"DeviceIndex": 0,
+				"AssociatePublicIpAddress": "False",
+				"DeleteOnTermination": "True",
+				"SubnetId": {
+				  "Ref": "SubnetLAN"
+				},
+				"PrivateIpAddresses": [
+				  {
+					"PrivateIpAddress": "10.1.20.60",
+					"Primary": "true"
+				  }
+				],
+				"GroupSet": [
+				  {
+					"Ref": "LinuxSrvSG"
+				  }
+				]
+			  }
+			],
+			"UserData": {
+			  "Fn::Base64": {
+				"Fn::Join": [
+				  "",
+				  [
+					"#!/bin/bash\n",
+					"useradd ", { "Ref": "UserName" }, " -m \n",
+					"echo '", { "Ref": "UserName" }, ":" , { "Ref": "DefaultAdminPassword" }, "' | chpasswd \n",
+					"usermod -a -G sudo ", { "Ref": "UserName" }, "\n",
+					"sed -e 's/PasswordAuthentication no/PasswordAuthentication yes/g' -i /etc/ssh/sshd_config \n",
+					"systemctl restart sshd \n",
+					"echo 'network:' > /etc/netplan/50-cloud-init.yaml \n",
+					"echo '    version: 2' >> /etc/netplan/50-cloud-init.yaml \n",
+					"echo '    ethernets:' >> /etc/netplan/50-cloud-init.yaml \n",
+					"echo '        eth0:' >> /etc/netplan/50-cloud-init.yaml \n",
+					"echo '            addresses: [10.1.20.60/24]' >> /etc/netplan/50-cloud-init.yaml \n",
+					"echo '            gateway4: 10.1.20.10' >> /etc/netplan/50-cloud-init.yaml \n",
+					"echo '            nameservers:' >> /etc/netplan/50-cloud-init.yaml \n",
+					"echo '                 addresses: [10.1.20.10, 1.1.1.1, 8.8.8.8]' >> /etc/netplan/50-cloud-init.yaml \n",
+					"sudo netplan apply"
+				  ]
+				]
+			  }
+			}
+		}
+	  },
+	    "Win2012SrvSG" : {
+		  "Type" : "AWS::EC2::SecurityGroup",
+		  "Properties" : {
+			  "GroupDescription": "BTH-FW SG for Windows to allow RDP connections", 
+			  "Tags": [
+				{
+					"Key": "Name",
+					"Value": "BTH-FW-SG-Win-RDP"
+				  }
+			  ],
+			"VpcId": {
+ 				"Ref": "VPC"
+ 			},
+			"SecurityGroupIngress" : [
+			  {"IpProtocol" : "tcp", "FromPort" : "3389", "ToPort" : "3389", "CidrIp" :{ "Ref" : "SourceCidrForRDP" } },
+			  {"IpProtocol" : "-1", "CidrIp" : "10.1.20.0/24" }
+			]
+		  }
+		},
+		"LinuxSrvSG" : {
+		  "Type" : "AWS::EC2::SecurityGroup",
+		  "Properties" : {
+			"Tags": [
+			{
+				"Key": "Name",
+				"Value": "BTH-FW-SG-LNX-SSH"
+			  }
+			],
+			"VpcId": {
+				"Ref": "VPC"
+			},
+			"GroupDescription" : "BTH-FW - Allow SSH",
+			"SecurityGroupIngress" : [
+			  {"IpProtocol" : "tcp", "FromPort" : "22", "ToPort" : "22", "CidrIp" :{ "Ref" : "SourceCidrForRDP" } },
+			  {"IpProtocol" : "-1", "CidrIp" : "10.1.10.0/24" },
+			  {"IpProtocol" : "-1", "CidrIp" : "10.1.20.0/24" }
+			]
+		  }
+		},
+		"XGFirewallWANSG": {
+		  "Type": "AWS::EC2::SecurityGroup",
+		  "Properties": {
+			"GroupDescription": "Allow access to 22 and 4444.",
+			"SecurityGroupIngress": [
+			  {
+				"IpProtocol": "tcp",
+				"FromPort": "0",
+				"ToPort": "22",
+				"CidrIp": { "Ref" : "SourceCidrForRDP" }
+			  },
+			  {
+				"IpProtocol": "tcp",
+				"FromPort": "0",
+				"ToPort": "4444",
+				"CidrIp": { "Ref" : "SourceCidrForRDP" }
+			  }
+			],
+			"SecurityGroupEgress": [
+			  {
+				"IpProtocol": "-1",
+				"FromPort": -1,
+				"ToPort": -1,
+				"CidrIp": "0.0.0.0/0"
+			  }
+			],
+			"VpcId": {
+				  "Ref": "VPC"
+			}
+		  }
+		},
+		"XGFirewallLANSG": {
+		  "Type": "AWS::EC2::SecurityGroup",
+		  "Properties": {
+			"GroupDescription": "Security Group for private subnet. Allow everything by default",
+			"VpcId": {
+			  "Ref": "VPC"
+			},
+			"SecurityGroupIngress": [
+			  {
+				"IpProtocol": "-1",
+				"FromPort": -1,
+				"ToPort": -1,
+				"CidrIp": "0.0.0.0/0"
+			  }
+			],
+			"SecurityGroupEgress": [
+			  {
+				"IpProtocol": "-1",
+				"FromPort": -1,
+				"ToPort": -1,
+				"CidrIp": "0.0.0.0/0"
+			  }
+			]
+		  }
+		},
+		"XGInterfacePublic": {
+		  "Type": "AWS::EC2::NetworkInterface",
+		  "Properties": {
+			"SubnetId": {
+			  "Ref": "SubnetWAN"
+			},
+			"PrivateIpAddresses": [
+			  {
+				"PrivateIpAddress": "10.1.10.10",
+				"Primary": "true"
+			  }
+			],
+			"SourceDestCheck": "false",
+			"Description": "ENI for Public Subnet",
+			"GroupSet": [
+			  {
+				"Ref": "XGFirewallWANSG"
+			  }
+			]
+		  }
+		},
+		"XGInterfacePriv": {
+		  "Type": "AWS::EC2::NetworkInterface",
+		  "Properties": {
+			"SubnetId": {
+			  "Ref": "SubnetLAN"
+			},
+			"PrivateIpAddresses": [
+			  {
+				"PrivateIpAddress": "10.1.20.10",
+				"Primary": "true"
+			  }
+			],
+			"SourceDestCheck": "false",
+			"Description": "ENI for Private Subnet",
+			"GroupSet": [
+			  {
+				"Ref": "XGFirewallLANSG"
+			  }
+			]
+		  }
+		},
+		"XGNewEIP": {
+		  "Type": "AWS::EC2::EIP",
+		  "Properties": {
+			"Domain": "vpc"
+		  }
+		},
+		"XGAssociateEIP": {
+		  "Type": "AWS::EC2::EIPAssociation",
+		  "Properties": {
+			"AllocationId": {
+			  "Fn::GetAtt": [
+				"XGNewEIP",
+				"AllocationId"
+			  ]
+			},
+			"NetworkInterfaceId": {
+			  "Ref": "XGInterfacePublic"
+			}
+		  }
+		},
+		"XGLaunchTemplate": {
+		  "Type": "AWS::EC2::LaunchTemplate",
+		  "Properties": {
+			"LaunchTemplateName": {
+			  "Fn::Join": [
+				"-",
+				[
+				  {
+					"Ref": "AWS::StackName"
+				  },
+				  "XGLT"
+				]
+			  ]
+			},
+			"LaunchTemplateData": {
+			  "KeyName": {
+				"Ref": "KeyName"
+			  },
+			  "NetworkInterfaces": [
+				{
+				  "NetworkInterfaceId": {
+					"Ref": "XGInterfacePriv"
+				  },
+				  "DeviceIndex": "0"
+				},
+				{
+				  "NetworkInterfaceId": {
+					"Ref": "XGInterfacePublic"
+				  },
+				  "DeviceIndex": "1"
+				}
+			  ],
+			  "ImageId": {
+				"Fn::FindInMap": [
+				  "XGRegionMap",
+				  {
+					"Ref": "AWS::Region"
+				  },
+				  "BYOL"
+				]
+			  },
+			  "UserData": {
+				"Fn::Base64": {
+				  "Fn::Join": [
+					"",
+					[
+					  "{",
+					  "\"hostname\":\"",
+					  {
+						"Ref": "XGFirewallName"
+					  },
+					  "\",",
+					  "\"sendstats\":\"on",
+					  "\"region\":\"",
+					  {
+						"Ref": "AWS::Region"
+					  },
+					  "\",",
+					  "\"secretId\":\"",
+					  {
+						"Ref": "PasswordSecret"
+					  },
+					  "\"",
+					  "}\n"
+					]
+				  ]
+				}
+			  }
+			}
+		  }
+		},
+		"XGInstance": {
+		  "Type": "AWS::EC2::Instance",
+		  "Properties": {
+		    "InstanceType": "t2.medium",
+			"LaunchTemplate": {
+			  "LaunchTemplateId": {
+				"Ref": "XGLaunchTemplate"
+			  },
+			  "Version": {
+				"Fn::GetAtt": [
+				  "XGLaunchTemplate",
+				  "LatestVersionNumber"
+				]
+			  }
+			},
+			"AvailabilityZone": {
+				  "Fn::Select": [
+					0,
+					{
+					  "Fn::GetAZs": ""
+					}
+				  ]
+			},
+			"Tags": [
+			  {
+				"Key": "Name",
+				"Value": {
+				  "Ref": "XGFirewallName"
+				}
+			  }
+			]
+		  }
+		},
+		"Kali": {
+		  "Type": "AWS::EC2::Instance",
+		  "Properties": {
+			"DisableApiTermination": "false",
+			"InstanceInitiatedShutdownBehavior": "stop",
+			"Monitoring": "false",
+			"ImageId": {
+			  "Ref": "KaliAmiId"
+			},
+			"InstanceType": "t2.micro",
+			"KeyName": {
+				  "Ref": "KeyName"
+			},
+			"Tags": [
+			  {
+				"Key": "Name",
+				"Value": "BTH-FW-KaliLinux"
+			  }
+			],
+			"NetworkInterfaces": [
+			  {
+				"Description": "Kali Public network interface",
+				"DeviceIndex": 0,
+				"AssociatePublicIpAddress": "True",
+				"DeleteOnTermination": "True",
+				"SubnetId": {
+				  "Ref": "SubnetWAN"
+				},
+				"PrivateIpAddresses": [
+				  {
+					"PrivateIpAddress": "10.1.10.100",
+					"Primary": "true"
+				  }
+				],
+				"GroupSet": [
+				  {
+					"Ref": "LinuxSrvSG"
+				  }
+				]
+			  }
+			],
+			"UserData": {
+			  "Fn::Base64": {
+				"Fn::Join": [
+				  "",
+				  [
+					"#!/bin/bash\n",
+					"sudo useradd adminkali\n",
+					"sudo echo 'adminkali:" , { "Ref": "DefaultAdminPassword" }, "' | chpasswd \n",
+					"sudo usermod -a -G sudo adminkali \n",
+					"sed -e 's/PasswordAuthentication no/PasswordAuthentication yes/g' -i /etc/ssh/sshd_config \n",
+					"systemctl restart sshd"
+				  ]
+				]
+			  }
+			}
+		  }
+		},
+	    "WinSrv2012": {
+		  "Type" : "AWS::EC2::Instance",
+		  "DependsOn" : "GuacamoleEC2",
+			"Metadata": {
+				"AWS::CloudFormation::Init": {
+				  "config" : {
+					"files" : {
+					  "C:\\resources\\SophosSetup.exe" : {
+						"source" : "https://api-cloudstation-us-east-2.prod.hydra.sophos.com/api/download/a27ac774ff4efe8ab0831a5cfb09973a/SophosSetup.exe"
+					  },
+					  "C:\\resources\\ChromeSetup.exe" : {
+						"source" : "https://dl.google.com/tag/s/appguid%3D%7B8A69D345-D564-463C-AFF1-A69D9E530F96%7D%26iid%3D%7B76C6B3A6-70B2-80CE-FDA9-C7EA88961CCE%7D%26lang%3Dpt-BR%26browser%3D4%26usagestats%3D0%26appname%3DGoogle%2520Chrome%26needsadmin%3Dprefers%26ap%3Dx64-stable-statsdef_1%26installdataindex%3Dempty/update2/installers/ChromeSetup.exe"
+					  },
+					  "c:\\resources\\InstallSophos-SetStaticIP.ps1": {
+						"content": {
+						  "Fn::Join": [
+							"",
+							[
+							  "C:\\resources\\SophosSetup.exe --quiet | Out-Null",
+							  "$netip = Get-NetIPConfiguration;",
+							  "$ipconfig = Get-NetIPAddress | ?{$_.IpAddress -eq $netip.IPv4Address.IpAddress};",
+							  "Get-NetAdapter | Set-NetIPInterface -DHCP Disabled;",
+							  "Get-NetAdapter | New-NetIPAddress -AddressFamily IPv4 -IPAddress $netip.IPv4Address.IpAddress -PrefixLength $ipconfig.PrefixLength -DefaultGateway \"10.1.20.10\";",
+							  "Get-NetAdapter | Set-DnsClientServerAddress -ServerAddresses $netip.DNSServer.ServerAddresses;",
+							  "\n"
+							]
+						  ]
+						}
+					  },
+					  "c:\\resources\\Ren-Computer.ps1": {
+						"content": {
+						  "Fn::Join": [
+							"",
+							[
+								"Function Get-RandomAlphanumericString { \n",
+								" \n",
+								"      [CmdletBinding()] \n",
+								"       Param ( \n",
+								"         [int] $length = 8 \n",
+								"       ) \n",
+								" \n",
+								"       Begin{ \n",
+								"       } \n",
+								"\n",
+								"  Process{ \n",
+								"     Write-Output ( -join ((0x30..0x39) + ( 0x41..0x5A) + ( 0x61..0x7A) | Get-Random -Count $length  | % {[char]$_}) ) \n",
+								"  } \n",
+								"} \n",
+								" \n",
+								"$randString = (Get-RandomAlphanumericString -length 4 | Tee-Object -variable teeTime ) \n",
+								" \n",
+								"$NewUserName = '", { "Ref": "UserName" }, "' -replace '[.]'\n",
+								"$ComputerName = 'SRV-' + $NewUserName + '-' + $randstring \n",
+								"$ComputerName = $ComputerName.toUpper() \n",
+								"$netip = Get-NetIPConfiguration; \n",
+								"$ipconfig = Get-NetIPAddress | ?{$_.IpAddress -eq $netip.IPv4Address.IpAddress}; \n",
+								"Get-NetAdapter | Set-NetIPInterface -DHCP Disabled; \n",
+								"Get-NetAdapter | New-NetIPAddress -AddressFamily IPv4 -IPAddress $netip.IPv4Address.IpAddress -PrefixLength $ipconfig.PrefixLength -DefaultGateway \"10.1.20.10\"; \n",
+								"Get-NetAdapter | Set-DnsClientServerAddress -ServerAddresses $netip.DNSServer.ServerAddresses; \n",
+								"Rename-Computer -NewName $ComputerName -force -restart \n"
+							]
+						  ]	
+						}
+					  }
+					},
+					"commands" : {
+					  "1-install-chrome" : {
+						"command" : "C:\\resources\\ChromeSetup.exe /silent /install"
+					  },
+					  "2-rename-computer" : {
+						"command": {
+						  "Fn::Join": [
+							"",
+							[
+							  "powershell.exe -ExecutionPolicy unrestricted . c:\\resources\\Ren-Computer.ps1"
+							]
+						  ]
+						},
+						"waitAfterCompletion": "forever"
+					  },
+					  "3-install-sophos" : {
+						"command" : "C:\\resources\\SophosSetup.exe --quiet",
+						"waitAfterCompletion": "forever"
+					  },
+					  "4-set-static-ip" : {
+						"command" : "powershell.exe -ExecutionPolicy unrestricted . c:\\resources\\InstallSophos-SetStaticIP.ps1"
+					  }
+					}		
+				  }
+				}
+			},
+		  "Properties": {
+		    "KeyName" : { "Ref" : "KeyName" },
+			"ImageId" : { "Fn::FindInMap" : [ "WinSRVAWSRegion2AMI", { "Ref" : "AWS::Region" }, "Windows2012r2" ]},
+			"InstanceType": "t2.medium",
+			"Tags": [
+			  {
+				"Key": "Name",
+				"Value": "BTH-FW-WinSrv2012"
+			  }
+			],
+			"NetworkInterfaces": [{
+				"AssociatePublicIpAddress": "True",
+				"DeleteOnTermination": "True",
+				"SubnetId": {
+					"Ref": "SubnetLAN"
+				},
+				"DeviceIndex": "0",
+				"GroupSet": [{
+					"Ref": "Win2012SrvSG"
+				}],
+				"PrivateIpAddresses": [
+				  {
+					"PrivateIpAddress": "10.1.20.50",
+					"Primary": "true"
+				  }
+				]
+			}],
+		    "UserData" : { "Fn::Base64" : { "Fn::Join" : ["", [
+			  "<powershell>\n",
+				"$ErrorActionPreference='SilentlyContinue'  \n",
+				"Stop-Transcript | out-null \n",
+				"$ErrorActionPreference = 'Continue'  \n",
+				"mkdir C:\\resources  \n",
+				"Start-Transcript -path C:\\resources\\AWSCloudFormation_InitialScript.log -append  \n",
+				"cfn-init.exe -v -s ", { "Ref" : "AWS::StackId" }, 
+				" -r WinSrv2012",
+				" --region ", { "Ref" : "AWS::Region" }, "\n",
+				"tzutil /s 'E. South America Standard Time' \n",
+				"net user ", { "Ref": "UserName" }, " ",  { "Ref": "DefaultAdminPassword" }, " /add /y /expires:never\n",
+				"NET LOCALGROUP 'Administrators' ", { "Ref": "UserName" }, " /add \n",
+				" \n",
+				"Stop-Transcript \n",
+			  "</powershell>"
+			  ]]}
+		    }
+		  }
+		},
+		"PasswordSecret": {
+		  "Type": "AWS::SecretsManager::Secret",
+		  "Properties": {
+			"Name": {
+			  "Fn::Join": [
+				"-",
+				[
+				  "xgpass",
+				  {
+					"Ref": "AWS::StackName"
+				  }
+				]
+			  ]
+			},
+			"Description": "This secret has a hardcoded password in SecretString (use GenerateSecretString instead)",
+			"SecretString": {
+			  "Ref": "DefaultAdminPassword"
+			}
+		  }
+		}
+	},
+	"Outputs" : {
+	  "GuacamoleURL": {
+		"Description" : "Public DNSName of Guacamole Remote access server",
+		"Value": { "Fn::Join": [
+					"", 
+					[
+					"http://",
+					{ "Fn::GetAtt" : [ "GuacamoleEC2", "PublicDnsName" ] },
+					"/guacamole"
+					]] 
+				}
+	  },
+	  "GuacamolePublicIP" : {
+		"Description" : "Public IP address of the newly created Guacamole instance",
+		"Value" : { "Fn::GetAtt" : [ "GuacamoleEC2", "PublicIp" ] }
+	  },
+	  "KaliLinuxPublicIP" : {
+		"Description" : "Public IP address of the newly created Kali Linux instance",
+		"Value" : { "Fn::GetAtt" : [ "Kali", "PublicIp" ] }
+	  },
+	  "XGFirewallURL": {
+		"Description" : "URL for access XG Firewall ",
+		"Value": { "Fn::Join": [
+					"", 
+					[
+					"https://",
+					{ "Ref" : "XGNewEIP" },
+					":4444/"
+					]] 
+				}
+	  }
+   }
+}
