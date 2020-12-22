@@ -1,7 +1,7 @@
 {
 	  "AWSTemplateFormatVersion" : "2010-09-09",
 
-	  "Description" : "This template creates some resources to run Sophos Brasil labs, intended for trainings like  and BTH.",
+	  "Description" : "This template creates some resources to run Be the Hacker, Beat the Hacker - Firewall edition labs, intended for trainings like  and BTH.",
 	  "Parameters" : {
 		"KeyName" : {
 		  "Description" : "Name of an existing EC2 KeyPair",
