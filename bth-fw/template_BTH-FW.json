@@ -10,7 +10,7 @@
 		},
 		"UserName" : {
 		  "Description" : "Define your username from  (without the domain @sophosbrlabs.com.br",
-		  "Default": "rafael.foster",
+		  "Default": "",
 		  "Type" : "String"
 		},
 		 "SourceCidrForRDP" : {
@@ -18,18 +18,18 @@
 		  "Type" : "String",
 		  "MinLength" : "9",
 		  "MaxLength" : "18",
-		  "Default": "177.45.159.93/32",
+		  "Default": "0.0.0.0/32",
 		  "AllowedPattern" : "^([0-9]+\\.){3}[0-9]+\\/[0-9]+$"
 		},
 		"DefaultAdminPassword" : {
-			"Default": "F0ster@001",
+			"Default": "S0phos#2020",
 			"Type": "String",
 			"NoEcho": "true"
 		},
 		"XGFirewallName": {
 		  "Description": "Name tag for your XG Firewall, as well as the hostname.",
 		  "Type": "String",
-		  "Default": "XGRFOSTERAWS01",
+		  "Default": "XGAWS",
 		  "ConstraintDescription": "Must be a valid hostname",
 		  "AllowedPattern": "^\\w([\\-\\.]?\\w)*$",
 		  "MaxLength": 255
