@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration APIVersion="1800.1">
+  <IPHost transactionid="">
+    <Name>TestingHostAddress</Name>
+    <IPFamily>IPv4</IPFamily>
+    <IPAddress>192.168.2.40</IPAddress>
+    <HostType>IP</HostType>
+  </IPHost>
+</Configuration>
