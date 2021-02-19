@@ -691,13 +691,12 @@ WHERE
     name = '{USERNAME}'
     AND type = 'USER';
 
-INSERT INTO `guacamole_connection` VALUES (1,'Kali Linux (WAN)',NULL,'ssh',NULL,NULL,NULL,NULL,2,NULL,0);
-INSERT INTO `guacamole_connection` VALUES (2,'Windows 2012 Server (LAN)',NULL,'rdp',NULL,NULL,NULL,NULL,2,NULL,0);
-INSERT INTO `guacamole_connection` VALUES (3,'Linux Web Server (LAN)',NULL,'ssh',NULL,NULL,NULL,NULL,2,NULL,0);
 
-INSERT INTO `guacamole_connection_parameter` VALUES (1,'hostname','10.1.10.100'),(1,'password','{DEFAULTPASSWORD}'),(1,'port','22'),(1,'username','{USERNAME}'),(2,'hostname','10.1.20.50'),(2,'ignore-cert','true'),(2,'password','{DEFAULTPASSWORD}'),(2,'port','3389'),(2,'username','{USERNAME}'),(3,'hostname','10.1.20.60'),(3,'password','{DEFAULTPASSWORD}'),(3,'port','22'),(3,'username','{USERNAME}');
+INSERT INTO `guacamole_connection_group` VALUES (1,NULL,'WAN','ORGANIZATIONAL',NULL,NULL,0),(2,NULL,'LAN','ORGANIZATIONAL',NULL,NULL,0);
+INSERT INTO `guacamole_connection_group_permission` VALUES (1,1,'READ'),(1,1,'UPDATE'),(1,1,'DELETE'),(1,1,'ADMINISTER'),(2,1,'READ'),(1,2,'READ'),(1,2,'UPDATE'),(1,2,'DELETE'),(1,2,'ADMINISTER'),(2,2,'READ');
 
-INSERT INTO `guacamole_connection_permission` VALUES (2,1,'READ');
-INSERT INTO `guacamole_connection_permission` VALUES (2,2,'READ');
-INSERT INTO `guacamole_connection_permission` VALUES (2,3,'READ');
+INSERT INTO `guacamole_connection` VALUES (1,'Kali Linux (SSH)',1,'ssh',NULL,NULL,NULL,NULL,2,NULL,0),(2,'Windows 2012 Server (RDP)',2,'rdp',NULL,NULL,NULL,NULL,2,NULL,0),(3,'Linux Web Server (SSH)',2,'ssh',NULL,NULL,NULL,NULL,2,NULL,0),(4,'Kali Linux GUI (VNC)',1,'vnc',5901,'10.1.10.100','NONE',NULL,NULL,NULL,0);
 
+INSERT INTO `guacamole_connection_parameter` VALUES (1,'hostname','10.1.10.100'),(1,'password','{DEFAULTPASSWORD}'),(1,'port','22'),(1,'username','{USERNAME}'),(2,'hostname','10.1.20.50'),(2,'ignore-cert','true'),(2,'password','{DEFAULTPASSWORD}'),(2,'port','3389'),(2,'username','{USERNAME}'),(3,'hostname','10.1.20.60'),(3,'password','{DEFAULTPASSWORD}'),(3,'port','22'),(3,'username','{USERNAME}'), (4,'password','{DEFAULTPASSWORD}');
+
+INSERT INTO `guacamole_connection_permission` VALUES (2,1,'READ'),(2,2,'READ'),(2,3,'READ'),(1,4,'READ'),(1,4,'UPDATE'),(1,4,'DELETE'),(1,4,'ADMINISTER'),(2,4,'READ');
